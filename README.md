@@ -340,7 +340,9 @@ ggsave(both, filename=paste0(path_output_data, substr(output_name, 1, nchar(outp
 ```
 
 An example of the Manhattan Plot for PLACO output:
-
+<br></br>
+<kbd> <img src="Images/output_PLACO_Manhattan_Plot.png"/> </kbd>
+<br></br>
 
 
 
