@@ -39,12 +39,14 @@ output_names <- c(  "TRAIT_1_Common_inc_Z",
 info_threshold <- 0.8
 MAF_threshold <- 0.01
 ```
+
 libraries used in the code
 ```r
 library(vroom)
 library(dplyr)
 library(data.table)
 ```
+
 RUNNING SECTIONS
 <br>
 Summary: Reading GWAS data, filtering some SNPs, calculation of Z based on "beta" and "se", extraction of common SNPs between pair of GWAS data
@@ -63,6 +65,7 @@ gwas_traits_1 <- as.data.frame(gwas_traits_1)
 gwas_traits_2 <- vroom(file=paste0(path_input_data_trait2, traits_2))
 gwas_traits_2 <- as.data.frame(gwas_traits_2)
 ```
+
 **IMPORTANT NOTE**: The following columns MUST be available in the GWAS data. If not, a user could rename the columns in the GWAS data or makes changes in the script.  
 - snp (RS ID)
 - chr (chromosome)
@@ -140,9 +143,10 @@ vroom_write(gwas_traits_2, file = paste0(path_output_data, output_names[2], ".tx
 writeLines("\n\n")
 print(paste0('End of Running'))
 ```
-## First Step
-Now it is possible to run PLACO
 
+## Second Step
+Now it is possible to run PLACO
+<br>
 DEFINITION SECTION which should be changed by a user
 ```r
 # directory in which input data exist
@@ -161,6 +165,7 @@ output_name <- "output_PLACO_TRAIT_1_TRAIT_2"
 # used for decorrelating the Z-scores
 pval_threshold <- 0.05
 ```
+
 libraries used in the code
 ```r
 require(devtools)
@@ -170,6 +175,7 @@ library(dplyr)
 library(tidyr)
 library(vroom)
 ```
+
 RUNNING SECTIONS
 <br>
 Summary: Reading input data, checking SNPs order in both traits, creation of Z and P matrices, performing a total correlation between two traits to check whether a "decorrelation step" is needed or not
@@ -254,6 +260,86 @@ for (i in 1:length(traits_1)) {
   vroom_write(all_t, file = paste0(path_output_data, output_name[i],'.txt'))
 }
 ```
+
+## Analysis of the results
+A user could run the following script which perform three analyses as follow:
+1.	Performing a global correlation analysis between two traits (using Z columns) based on two methods (spearman and pearson) and save the results in *"_cor_test.txt"* file.
+2.	Finding significant SNPs from the PLACO result (p < 5×10-8) and save the results in *“_Sig.txt”* file.
+3.	Creation of a Manhattan Plot for all chromosomes and drawing a horizontal dashed line in black (indicating p-value threshold 5×10-8). In addition, SNPs with positive effect are colored in red while SNPs with negative effect are in blue. The plot would be saved as a *“.png”* file format. 
+
+```r
+# libraries used in the code
+library(ggplot2)
+library(patchwork)
+library(tidyr)
+library(dplyr)
+library(vroom)
+
+# ================================================================================
+# DEFINITION SECTION
+# user should change this section based on proper PATHs and file names
+# ================================================================================
+# directory in which input data exist
+path_input_data = "~/PLACO/"
+
+# the file name of input data
+placo_result_name <- "output_PLACO_TRAIT_1_TRAIT_2.txt"
+
+# directory in which an output data would be written
+path_output_data = "~/PLACO/"
+
+# the file names of the output data
+output_name <- "output_PLACO_TRAIT_1_TRAIT_2_Sig.txt"
+
+# ================================================================================
+# RUNNING SECTION
+# ================================================================================
+# reading the input data
+placo_result <- vroom(file=paste0(path_input_data, placo_result_name))
+placo_result <- as.data.frame(placo_result)
+
+# performing a correlation analysis between two traits (using Z columns) 
+# correlation test is based on two methods: spearman and pearson
+A <- cor.test(placo_result$Z.x, placo_result$Z.y, method='spearman')
+A
+B <- cor.test(placo_result$Z.x, placo_result$Z.y, method='pearson')
+B
+
+# writing correlation test output into a text file
+capture.output(A, file = paste0(path_output_data, substr(output_name, 1, nchar(output_name)-8), "_cor_test.txt") )
+capture.output(B, file = paste0(path_output_data, substr(output_name, 1, nchar(output_name)-8), "_cor_test.txt"), append = TRUE )
+
+# finding significant SNPs (p < 5*10^-8) and divide them into "positive" and "negative" effect groups
+ds <- placo_result[which(placo_result$p.placo<5*10^-8),]
+dpos <- ds[which(ds$T.placo>0),]
+dneg <- ds[which(ds$T.placo<0),]
+
+# writing output data
+vroom_write(ds, file = paste0(path_output_data, output_name))
+
+# creation of a Manhattan Plot
+dpos <- mutate(dpos, pos2=round(bp_hg19/1000000, digits=2))
+dneg <- mutate(dneg, pos2=round(bp_hg19/1000000, digits=2))
+
+dall <- mutate(placo_result, pos2=round(bp_hg19/1000000, digits=2))
+
+both <- ggplot() +
+  geom_point(data=dall, aes(x=pos2, y=-log10(p.placo)), col="grey") +
+  geom_point(data=dpos, aes(x=pos2, y=-log10(p.placo)), col="cornflowerblue") +
+  geom_point(data=dneg, aes(x=pos2, y=-log10(p.placo)), col="brown2") +
+  theme_bw() +
+  ggtitle(substr(output_name, 1, nchar(output_name)-8)) +
+  geom_hline(yintercept=-log10(5E-8), linetype='dashed', color='black') +
+  labs(x ="Position (Mb)") +
+  theme(axis.text.x = element_text(angle=45)) +
+  facet_wrap(~as.numeric(chr), scales='free')
+
+ggsave(both, filename=paste0(path_output_data, substr(output_name, 1, nchar(output_name)-8), 
+                             '_Manhattan_Plot.png', sep=''), device='png', w=8, h=8 )
+
+```
+
+An example of the Manhattan Plot for PLACO output:
 
 
 
