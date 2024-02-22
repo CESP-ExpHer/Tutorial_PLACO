@@ -1,7 +1,7 @@
 # PLACO
 Created by: Yazdan Asgari<br>
 Creation date: 24 Dec 2021<br>
-Update: 24 Dec 2021<br>
+Update: Feb 2024<br>
 https://cesp.inserm.fr/en/equipe/exposome-and-heredity
 <br>
 <br>
@@ -16,7 +16,7 @@ Here is an example of running PLACO for two traits
 <br>
 **NOTE 2:** PLACO needs **Z** column for running. So, if that column is not available in the GWAS data, a user should calculate it.
 <br>
-So, there are two parts: 1) finding common SNPs and calculation of Z column, 2) running PLACO function
+So, there are two parts: 1) finding common SNPs and calculation of the Z column, 2) running the PLACO function
 ## First Step
 DEFINITION SECTION which should be changed by a user
 ```r
@@ -31,7 +31,7 @@ traits_2 <- "TRAIT_2.txt"
 # directory in which an output data would be written
 path_output_data = "~/PLACO/"
 
-# the file names of the output data 
+# The file names of the output data 
 output_names <- c(  "TRAIT_1_Common_inc_Z",
                     "TRAIT_2_Common_inc_Z")
 
@@ -66,7 +66,7 @@ gwas_traits_2 <- vroom(file=paste0(path_input_data_trait2, traits_2))
 gwas_traits_2 <- as.data.frame(gwas_traits_2)
 ```
 
-**IMPORTANT NOTE**: The following columns MUST be available in the GWAS data. If not, a user could rename the columns in the GWAS data or makes changes in the script.  
+**IMPORTANT NOTE**: The following columns MUST be available in the GWAS data. If not, a user could rename the columns in the GWAS data or make changes in the script.  
 - snp (RS ID)
 - chr (chromosome)
 - bp_hg19 (base pair position)
@@ -97,7 +97,7 @@ gwas_traits_2 %>% mutate(Z = case_when(gwas_traits_2$se == 0   ~ 1.0e+08 , gwas_
 # merging two GWAS data based on "snp", "chr", and "bp_hg19" columns
 gwas_merge <- inner_join(gwas_traits_1,gwas_traits_2, by = c("snp", "chr", "bp_hg19"))
 
-# checking number of total, unique, and duplicated rsids
+# checking the number of total, unique, and duplicated rsids
 length(gwas_merge$snp)
 length(unique(gwas_merge$snp))
 dim(gwas_merge[duplicated(gwas_merge$snp), ])[1]
@@ -178,7 +178,7 @@ library(vroom)
 
 RUNNING SECTIONS
 <br>
-Summary: Reading input data, checking SNPs order in both traits, creation of Z and P matrices, performing a total correlation between two traits to check whether a "decorrelation step" is needed or not
+Summary: Reading input data, checking SNPs order in both traits, creating Z and P matrices, performing a total correlation between two traits to check whether a "decorrelation step" is needed or not
 ```r
 for (i in 1:length(traits_1)) {
   
@@ -239,7 +239,7 @@ for (i in 1:length(traits_1)) {
   writeLines("\n\n")
   print('End of Running Section:#2')
 
-  # Applying test of pleiotropy for each variant
+  # Applying a test of pleiotropy for each variant
   # ================================================================================  
   out_1 <- sapply(1:nrow(t1), function(i) placo(Z=Z.matrix.decor[i,], VarZ=VarZ))
   out_2 <- t(out_1)
@@ -262,10 +262,10 @@ for (i in 1:length(traits_1)) {
 ```
 
 ## Analysis of the results
-A user could run the following script which perform three analyses as follow:
+A user could run the following script which performs three analyses as follow:
 1.	Performing a global correlation analysis between two traits (using Z columns) based on two methods (spearman and pearson) and save the results in *"_cor_test.txt"* file.
 2.	Finding significant SNPs from the PLACO result (p < 5×10-8) and save the results in *“_Sig.txt”* file.
-3.	Creation of a Manhattan Plot for all chromosomes and drawing a horizontal dashed line in black (indicating p-value threshold 5×10-8). In addition, SNPs with positive effect are colored in red while SNPs with negative effect are in blue. The plot would be saved as a *“.png”* file format. 
+3.	Creation of a Manhattan Plot for all chromosomes and drawing a horizontal dashed line in black (indicating p-value threshold 5×10-8). In addition, SNPs with positive effects are colored in red while SNPs with negative effects are in blue. The plot would be saved as a *“.png”* file format. 
 
 ```r
 # libraries used in the code
@@ -282,7 +282,7 @@ library(vroom)
 # directory in which input data exist
 path_input_data = "~/PLACO/"
 
-# the file name of input data
+# the file name of the input data
 placo_result_name <- "output_PLACO_TRAIT_1_TRAIT_2.txt"
 
 # directory in which an output data would be written
